@@ -4,13 +4,36 @@ var assert = require('assert'),
 
 var model = mongoose.model('Foo', new mongoose.Schema({}));
 
+it('can works via callback', function(done) {
+    mobgoose({
+        url: 'mongodb://localhost:27017',
+        database: 'test'
+    }, done);
+});
+
+it('works via promise', function() {
+    return mobgoose({
+        url: 'mongodb://localhost:27017',
+        database: 'test'
+    });
+});
+
+it('supports a direct conection string', function() {
+    return mobgoose('mongodb://localhost:27017/test')
+        .then(function(connection) {
+            var model = connection.model('Foo');
+        
+            assert(model.db.name === 'test');
+        });
+});
+
 describe('connecting to two different databases on the same server', function(done) {
     var connection1, connection2;
     
     before(function(done) {
         mobgoose({
             url: 'mongodb://localhost:27017',
-            database: 'test'
+            database: 'test1'
         }, function(err, connection) {
             if (err) {
                 done(err);
@@ -43,8 +66,10 @@ describe('connecting to two different databases on the same server', function(do
     it('registers a model defined before the connection was created (globally)', function() {
         assert(connection1.model('Foo') !== undefined);
         assert(connection1.model('Foo').modelName === 'Foo');
+        assert(connection1.model('Foo').db.name === 'test1');
 
         assert(connection2.model('Foo') !== undefined);
         assert(connection2.model('Foo').modelName === 'Foo');
+        assert(connection2.model('Foo').db.name === 'test2');
     });
 });

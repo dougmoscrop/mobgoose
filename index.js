@@ -31,6 +31,12 @@ function connect(url, connectionOptions) {
 module.exports = function(config, done) {
     config = config || {};
     
+    if (typeof config === 'string') {
+        config = {
+            url: config
+        };
+    }
+    
     var connectionOptions = config.options || { db: { w: 'majority' } };
     var connectionTimeout = config.timeout || 5000;
     
