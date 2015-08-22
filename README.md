@@ -1,5 +1,7 @@
 # mobgoose
 
+[![Circle CI](https://circleci.com/gh/dougmoscrop/mobgoose.svg?style=svg)](https://circleci.com/gh/dougmoscrop/mobgoose)
+
 mobgoose will reuse connections to the same *url* and `useDb(database)` for you.
 If you are using database-per-tenant multi-tenancy this saves on open connections to the server.
 
