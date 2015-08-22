@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/dougmoscrop/mobgoose#readme",
   "devDependencies": {
+    "istanbul": "^0.3.18",
     "jscs": "^2.1.0",
     "jshint": "^2.8.0",
     "mocha": "^2.2.5",
