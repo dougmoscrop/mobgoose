@@ -4,9 +4,44 @@ var Bluebird = require('bluebird'),
     mongodbUri = require('mongodb-uri');
 
 var connections = {};
+var dbs = {};
 
 function isConnected(connection) {
   return connection.readyState === mongoose.STATES.connected;
+}
+
+process.on('exit', function() {
+  Object.keys(connections).forEach(function(key) {
+    var connection = connections[key];
+    if (isConnected(connection)) {
+      connection.close();
+    }
+  });
+});
+
+function useDb(url, database, connection) {
+  var db = dbs[url];
+
+  if (!db) {
+    db = dbs[url] = connection.useDb(database);
+
+    Object.keys(mongoose.models).forEach(function(key) {
+      var model = mongoose.models[key];
+
+      db.model(model.modelName, model.schema);
+    });
+  }
+
+  if (isConnected(db)) {
+    return Bluebird.resolve(db);
+  } else {
+    return bluebirdEvents(db, {
+      resolve: 'open',
+      reject: 'error'
+    }).then(function() {
+      return connection;
+    });
+  }
 }
 
 function connect(url, options) {
@@ -14,16 +49,6 @@ function connect(url, options) {
 
   if (!connection) {
     connection = connections[url] = mongoose.createConnection(url, options);
-
-    connection.on('close', function() {
-      delete connections[url];
-    });
-
-    process.on('exit', function() {
-      if (isConnected(connection)) {
-        connection.close();
-      }
-    });
   }
 
   if (isConnected(connection)) {
@@ -52,7 +77,9 @@ function configure(opts) {
 
   var uri = mongodbUri.parse(config.url);
 
-  config.database = config.database || uri.database;
+  uri.database = config.database = config.database || uri.database;
+
+  config.dbUrl = mongodbUri.format(uri);
 
   delete uri.database;
 
@@ -66,15 +93,7 @@ module.exports = function(opts, done) {
 
   return connect(config.url, config.options)
         .then(function(connection) {
-          var db = connection.useDb(config.database);
-
-          Object.keys(mongoose.models).forEach(function(key) {
-            var model = mongoose.models[key];
-
-            db.model(model.modelName, model.schema);
-          });
-
-          return db;
+          return useDb(config.dbUrl, config.database, connection);
         })
         .timeout(config.timeout);
 };
