@@ -10,6 +10,27 @@ function isConnected(connection) {
   return connection.readyState === mongoose.STATES.connected;
 }
 
+function ensureConnected(connection) {
+  if (isConnected(connection)) {
+    return Bluebird.resolve(connection);
+  } else {
+    return bluebirdEvents(connection, {
+        resolve: 'open',
+        reject: 'error'
+      }).then(function() {
+        return connection;
+      });
+  }
+}
+
+function loadModels(connection) {
+  Object.keys(mongoose.models).forEach(function(modelKey) {
+    var model = mongoose.models[modelKey];
+
+    connection.model(model.modelName, model.schema);
+  });
+}
+
 process.on('exit', function() {
   Object.keys(connections).forEach(function(key) {
     var connection = connections[key];
@@ -24,24 +45,10 @@ function useDb(key, database, connection) {
 
   if (!db) {
     db = dbs[key] = connection.useDb(database);
-
-    Object.keys(mongoose.models).forEach(function(modelKey) {
-      var model = mongoose.models[modelKey];
-
-      db.model(model.modelName, model.schema);
-    });
+    loadModels(db);
   }
 
-  if (isConnected(db)) {
-    return Bluebird.resolve(db);
-  } else {
-    return bluebirdEvents(db, {
-      resolve: 'open',
-      reject: 'error'
-    }).then(function() {
-      return connection;
-    });
-  }
+  return ensureConnected(db);
 }
 
 function connect(key, url, options) {
@@ -49,18 +56,10 @@ function connect(key, url, options) {
 
   if (!connection) {
     connection = connections[key] = mongoose.createConnection(url, options);
+    loadModels(connection);
   }
 
-  if (isConnected(connection)) {
-    return Bluebird.resolve(connection);
-  } else {
-    return bluebirdEvents(connection, {
-      resolve: 'open',
-      reject: 'error'
-    }).then(function() {
-      return connection;
-    });
-  }
+  return ensureConnected(connection);
 }
 
 function configure(opts) {
@@ -77,7 +76,11 @@ function configure(opts) {
 
   var uri = mongodbUri.parse(config.url);
 
-  uri.database = config.database = config.database || uri.database;
+  config.database = config.database || uri.database;
+
+  uri.database = config.database;
+  uri.username = config.username || uri.username;
+  uri.password = config.password || uri.password;
 
   config.url = mongodbUri.format(uri);
 
@@ -93,6 +96,10 @@ module.exports = function(opts, done) {
 
   return connect(config.key, config.url, config.options)
         .then(function(connection) {
+          if (connection.db.databaseName === config.database) {
+            return connection;
+          }
+
           return useDb(config.url, config.database, connection);
         })
         .timeout(config.timeout);
