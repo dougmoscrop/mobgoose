@@ -10,7 +10,8 @@ If you are using database-per-tenant multi-tenancy this saves on open connection
 You need to have `mongoose` as a dependency.
 
 ```javascript
-var mobgoose = require('mobgoose');
+var mongoose = require('mongoose'),
+var mobgoose = require('mobgoose')(mongoose);
 
 // connect via string
 mobgoose('mongodb://localhost:27017/my_db');
@@ -18,7 +19,8 @@ mobgoose('mongodb://localhost:27017/my_db');
 // connect via options - database overrides value in url
 mobgoose({
   url: 'mongodb://localhost:27017/my_ignored_db',
-  database: 'my_other_db'
+  database: 'my_other_db',
+  username: 'user123'
 });
 ```
 
