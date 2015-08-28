@@ -1,7 +1,7 @@
 var assert = require('assert'),
     Bluebird = require('bluebird'),
     mongoose = require('mongoose'),
-    mobgoose = require('./');
+    mobgoose = require('./')(mongoose);
 
 var Foo = mongoose.model('Foo', new mongoose.Schema({}));
 
