@@ -3,7 +3,7 @@ var assert = require('assert'),
     mongoose = require('mongoose'),
     mobgoose = require('./')(mongoose);
 
-var Foo = mongoose.model('Foo', new mongoose.Schema({}));
+var Foo = mongoose.model('Foo', new mongoose.Schema({}), 'foo_collection_name');
 
 it('supports a simple conection string', function() {
   return mobgoose('mongodb://localhost:27017/test')
@@ -23,6 +23,15 @@ it('can override database name of connection string', function() {
 
     assert(model.db.name === 'test2');
   });
+});
+
+it('keeps the model collection name', function() {
+  return mobgoose('mongodb://localhost:27017/test')
+        .then(function(connection) {
+          var model = connection.model('Foo');
+
+          assert(model.collection.name === 'foo_collection_name');
+        });
 });
 
 describe('different databases on the same server', function(done) {
