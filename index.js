@@ -30,7 +30,7 @@ module.exports = function(mongoose) {
     Object.keys(mongoose.models).forEach(function(modelKey) {
       var model = mongoose.models[modelKey];
 
-      connection.model(model.modelName, model.schema);
+      connection.model(model.modelName, model.schema, model.collection.name);
     });
   }
 
