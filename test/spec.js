@@ -1,7 +1,6 @@
 'use strict';
 
 var assert = require('assert'),
-    Bluebird = require('bluebird'),
     mongoose = require('mongoose'),
     mobgoose = require('../')(mongoose);
 
@@ -79,14 +78,14 @@ describe('different databases on the same server', function(done) {
 
 describe('multiple hosts', function() {
   it('work with a bunch of databases', function() {
-    return Bluebird.map(['localhost', '127.0.0.1'], function(host) {
-      return Bluebird.map(['foo', 'bar', 'baz'], function(database) {
+    return Promise.all(['localhost', '127.0.0.1'].map((host) => {
+      return Promise.all(['foo', 'bar', 'baz'].map((database) => {
         return mobgoose({
           host: host,
           database: database
         });
-      });
-    })
+      }));
+    }))
     .then(function() {
       assert(Object.keys(mobgoose.connections).length == 2);
     });

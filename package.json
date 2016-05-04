@@ -4,6 +4,7 @@
   "description": "Manage multiple mongoose connections",
   "main": "mobgoose.js",
   "scripts": {
+    "pretest": "npm prune",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- test/spec.js",
     "posttest": "eslint ."
   },
