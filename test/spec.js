@@ -1,37 +1,37 @@
+'use strict';
+
 var assert = require('assert'),
     Bluebird = require('bluebird'),
     mongoose = require('mongoose'),
-    mobgoose = require('./')(mongoose);
+    mobgoose = require('../')(mongoose);
 
 var Foo = mongoose.model('Foo', new mongoose.Schema({}), 'foo_collection_name');
 
-it('supports a simple conection string', function() {
-  return mobgoose('mongodb://localhost:27017/test')
-        .then(function(connection) {
-          var model = connection.model('Foo');
+it('accepts configuration without url', function() {
+  return mobgoose({ host: 'localhost', database: 'test123' })
+    .then(function(connection) {
+      var model = connection.model('Foo');
 
-          assert(model.db.name === 'test');
-        });
+      assert(model.db.name === 'test123');
+    });
 });
 
-it('can override database name of connection string', function() {
-  return mobgoose({
-    url: 'mongodb://localhost:27017/test',
-    database: 'test2'
-  }).then(function(connection) {
-    var model = connection.model('Foo');
+it('supports a simple conection string', function() {
+  return mobgoose('mongodb://localhost:27017/test')
+    .then(function(connection) {
+      var model = connection.model('Foo');
 
-    assert(model.db.name === 'test2');
-  });
+      assert(model.db.name === 'test');
+    });
 });
 
 it('keeps the model collection name', function() {
   return mobgoose('mongodb://localhost:27017/test')
-        .then(function(connection) {
-          var model = connection.model('Foo');
+    .then(function(connection) {
+      var model = connection.model('Foo');
 
-          assert(model.collection.name === 'foo_collection_name');
-        });
+      assert(model.collection.name === 'foo_collection_name');
+    });
 });
 
 describe('different databases on the same server', function(done) {
@@ -39,18 +39,20 @@ describe('different databases on the same server', function(done) {
 
   before(function() {
     return mobgoose({
-      url: 'mongodb://localhost:27017',
+      host: 'localhost',
       database: 'test1'
-    }).then(function(connection) {
+    })
+    .then(function(connection) {
       connection1 = connection;
     });
   });
 
   before(function() {
     return mobgoose({
-      url: 'mongodb://localhost:27017',
+      host: 'localhost',
       database: 'test2'
-    }).then(function(connection) {
+    })
+    .then(function(connection) {
       connection2 = connection;
     });
   });
@@ -77,15 +79,16 @@ describe('different databases on the same server', function(done) {
 
 describe('multiple hosts', function() {
   it('work with a bunch of databases', function() {
-    return Bluebird.map(['mongodb://localhost:27017', 'mongodb://127.0.0.1:27017'], function(url) {
+    return Bluebird.map(['localhost', '127.0.0.1'], function(host) {
       return Bluebird.map(['foo', 'bar', 'baz'], function(database) {
         return mobgoose({
-          url: url,
+          host: host,
           database: database
         });
       });
-    }).then(function() {
-      assert(Object.keys(mongoose.connections).length == 3); // 2 + global
+    })
+    .then(function() {
+      assert(Object.keys(mobgoose.connections).length == 2);
     });
   });
 });

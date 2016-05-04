@@ -1,0 +1,14 @@
+root: true
+
+extends:
+    "eslint:recommended"
+
+env:
+    node: true
+    es6: true
+
+ecmaFeatures:
+    generators: true
+
+rules:
+  no-unused-vars: 0

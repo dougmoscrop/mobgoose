@@ -1,30 +1,29 @@
-var mongodbUri = require('mongodb-uri');
+'use strict';
+
+const mongodbUri = require('mongodb-uri');
 
 module.exports = function configure(opts) {
-  var config = opts || {};
+  opts = opts || {};
 
-  if (typeof config === 'string') {
-    config = {
-      url: config
-    };
+  const config = typeof opts === 'string' ? mongodbUri.parse(opts) : opts;
+
+  if (config.host) {
+    config.hosts = [{
+      host: config.host,
+      port: config.port || 27017
+    }];
+    delete config.host;
   }
 
-  config.options = config.options || {db: {w: 'majority'}};
-  config.timeout = config.timeout || 5000;
+  const timeout = config.timeout || 5000;
+  const options = config.options || { db: { w: 'majority' } };
 
-  var uri = mongodbUri.parse(config.url);
+  const url = mongodbUri.format(config);
+  const database = config.database;
 
-  config.database = config.database || uri.database;
+  delete config.database;
 
-  uri.database = config.database;
-  uri.username = config.username || uri.username;
-  uri.password = config.password || uri.password;
+  const key = mongodbUri.format(config);
 
-  config.url = mongodbUri.format(uri);
-
-  delete uri.database;
-
-  config.key = mongodbUri.format(uri);
-
-  return config;
+  return { database, url, key, options, timeout };
 };
