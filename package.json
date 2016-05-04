@@ -1,6 +1,6 @@
 {
   "name": "mobgoose",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Manage multiple mongoose connections",
   "main": "mobgoose.js",
   "scripts": {
